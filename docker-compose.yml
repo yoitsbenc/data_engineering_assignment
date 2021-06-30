@@ -12,13 +12,27 @@ services:
 
   minio-s3:
     image: minio/minio
+    ports:
+      - "9000:9000"
     environment:
-      MINIO_ACCESS_KEY: spoton
-      MINIO_SECRET_KEY: spoton
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: server /data
 
   ingest:
     depends_on:
       - db
       - minio-s3
+    command: >
+      sh -c "
+        python ingest.py &&
+        python load_minio.py
+        python load_postgres.py
+      "
+    volumes:
+      - "./:/code"
     build:
       context: .
+    environment:
+      KAGGLE_KEY: $KAGGLE_KEY
+      KAGGLE_USERNAME: $KAGGLE_USERNAME
